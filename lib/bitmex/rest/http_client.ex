@@ -2,8 +2,11 @@ defmodule Bitmex.Rest.HTTPClient do
   use HTTPoison.Base
   import Bitmex.URI, only: [encode_query: 1]
 
-  @api_key Application.get_env(:bitmex, :api_key)
-  @api_secret Application.get_env(:bitmex, :api_secret)
+  @buy_api_key Application.get_env(:bitmex, Buy, :api_key)
+  @buy_api_secret Application.get_env(:bitmex, Buy, :api_secret)
+  @sell_api_key Application.get_env(:bitmex, Sell, :api_key)
+  @sell_api_secret Application.get_env(:bitmex, Sell, :api_secret)
+
   @test_mode Application.get_env(:bitmex, :test_mode)
   @api_host "https://www.bitmex.com"
   @api_testnet_host "https://testnet.bitmex.com"
@@ -16,7 +19,7 @@ defmodule Bitmex.Rest.HTTPClient do
 
   def auth_get(uri, params \\ [], opts \\ []) do
     query = uri_with_query(uri, params)
-    get(query, auth_headers(:get, query), set_request_timeouts(opts))
+    get(query, auth_headers(:get, query, params[:api_key]), set_request_timeouts(opts))
   end
 
   def auth_post(uri, params, opts \\ []) do
@@ -35,13 +38,13 @@ defmodule Bitmex.Rest.HTTPClient do
 
   def auth_request(verb, uri, params, opts, :url_encoding) do
     body = encode_query(params)
-    headers = verb |> auth_headers(uri, body) |> put_content_type(:params)
+    headers = verb |> auth_headers(uri, params[:api_key], body) |> put_content_type(:params)
     request(verb, uri, body, headers, set_request_timeouts(opts))
   end
 
   def auth_request(verb, uri, params, opts, :json) do
     body = Poison.encode!(params)
-    headers = verb |> auth_headers(uri, body) |> put_content_type(:json)
+    headers = verb |> auth_headers(uri, params[:api_key], body) |> put_content_type(:json)
     request(verb, uri, body, headers, set_request_timeouts(opts))
   end
 
@@ -61,12 +64,20 @@ defmodule Bitmex.Rest.HTTPClient do
 
   ## Helpers
 
-  defp auth_headers(verb, encoded_uri, data \\ "") do
+  defp auth_headers(verb, encoded_uri, key, data \\ "") do
     verb_string = to_verb_string(verb)
     nonce = Bitmex.Auth.nonce()
-    sig = Bitmex.Auth.sign(@api_secret, verb_string, @api_path <> encoded_uri,
-                           nonce, data)
-    ["api-nonce": to_string(nonce), "api-key": @api_key, "api-signature": sig]
+    case key do
+      :buy ->
+        sig = Bitmex.Auth.sign(@buy_api_secret, verb_string, @api_path <> encoded_uri,
+                              nonce, data)
+        ["api-nonce": to_string(nonce), "api-key": @buy_api_key, "api-signature": sig]
+
+      :sell ->
+        sig = Bitmex.Auth.sign(@sell_api_secret, verb_string, @api_path <> encoded_uri,
+                              nonce, data)
+        ["api-nonce": to_string(nonce), "api-key": @sell_api_key, "api-signature": sig]
+    end
   end
 
   defp to_verb_string(verb) do
