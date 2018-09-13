@@ -2,10 +2,10 @@ defmodule Bitmex.Rest.HTTPClient do
   use HTTPoison.Base
   import Bitmex.URI, only: [encode_query: 1]
 
-  @buy_api_key Application.get_env(:bitmex, Buy, :api_key)
-  @buy_api_secret Application.get_env(:bitmex, Buy, :api_secret)
-  @sell_api_key Application.get_env(:bitmex, Sell, :api_key)
-  @sell_api_secret Application.get_env(:bitmex, Sell, :api_secret)
+  @buy_api_key Application.get_env(:bitmex, Buy)[:api_key]
+  @buy_api_secret Application.get_env(:bitmex, Buy)[:api_secret]
+  @sell_api_key Application.get_env(:bitmex, Sell)[:api_key]
+  @sell_api_secret Application.get_env(:bitmex, Sell)[:api_secret]
 
   @test_mode Application.get_env(:bitmex, :test_mode)
   @api_host "https://www.bitmex.com"
