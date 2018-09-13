@@ -18,7 +18,8 @@ defmodule Bitmex.Rest.HTTPClient do
   end
 
   def auth_get(uri, params \\ [], opts \\ []) do
-    query = uri_with_query(uri, params)
+    new_params = Map.delete(params, "api_key")
+    query = uri_with_query(uri, new_params)
     get(query, auth_headers(:get, query, params[:api_key]), set_request_timeouts(opts))
   end
 
@@ -37,13 +38,15 @@ defmodule Bitmex.Rest.HTTPClient do
   def auth_request(verb, uri, params, opts \\ [], via \\ :json)
 
   def auth_request(verb, uri, params, opts, :url_encoding) do
-    body = encode_query(params)
+    new_params = Map.delete(params, "api_key")
+    body = encode_query(new_params)
     headers = verb |> auth_headers(uri, params[:api_key], body) |> put_content_type(:params)
     request(verb, uri, body, headers, set_request_timeouts(opts))
   end
 
   def auth_request(verb, uri, params, opts, :json) do
-    body = Poison.encode!(params)
+    new_params = Map.delete(params, "api_key")
+    body = Poison.encode!(new_params)
     headers = verb |> auth_headers(uri, params[:api_key], body) |> put_content_type(:json)
     request(verb, uri, body, headers, set_request_timeouts(opts))
   end
