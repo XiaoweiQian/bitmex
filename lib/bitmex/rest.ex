@@ -270,4 +270,12 @@ defmodule Bitmex.Rest do
       non_auth_get("/trade/bucketed", params)
     end
   end
+
+  defmodule Instrument do
+    
+    def get(params \\ %{}) do
+      non_auth_get("/instrument", params)
+    end
+  end
+
 end
